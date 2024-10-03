@@ -12,6 +12,8 @@ pub enum Mode {
 
 #[derive(Debug, Default)]
 pub struct Config {
+		read_file: String,
+		write_file: String,
 		pub in_file: String,
 		pub out_file: String,
 		pub file: String,
@@ -34,14 +36,26 @@ impl Config {
 		}
 
 		pub fn filtered(mut self) -> Self {
-				//if we have in_file don't care about out_file
+				//if we have in_file don't care about the -file flag
 				if !self.in_file.is_empty() {
-						self.out_file.clear();
-				} else { // no in_file, is there an out_file?
-						if self.out_file.is_empty() && self.file.is_empty() {
-								error!("No input or output file provided.");
-						}
+						self.file.clear();
+						self.read_file.clone_from(&self.in_file); //.clone();
+				} else if self.file.is_empty() { // no in_file, is there a file?
+						error!("No file to use provided.");
+				} else {
+						self.read_file.clone_from(&self.file); //.clone();
 				}
+				
+				self.write_file = if self.out_file.is_empty() {
+						let path = std::path::Path::new(&self.read_file);
+						if let Some(filename) = path.file_name() {
+								format!("result/{}", filename.to_str().unwrap())
+						} else {
+								error!(format!("Input given for file is not a valid path: {path:?}"));
+						}
+				} else {
+						self.out_file.clone()
+				};
 
 				self
 		}
@@ -49,10 +63,10 @@ impl Config {
 		pub fn print_help(&self) {
 				println!("Usage: impass [OPTIONS]\n
 Where available options are:
-\t-i\tSet an input file
-\t-o\tSet an output file
-\t-f\tSet a file to read or write
-\t-p\tSet a password to protect your file
+\t-i, --input \tSet an input file
+\t-o, --output\tSet an output file
+\t-f, --file  \tSet a file to read or write
+\t-p, --pass  \tSet a password to protect your file
 ");
 		}
 
@@ -109,5 +123,13 @@ Where available options are:
 				}
 
 				config.filtered()
+		}
+
+		pub fn file_to_read(&self) -> &String {
+				&self.read_file
+		}
+
+		pub fn file_to_write(&self) -> &String {
+				&self.write_file
 		}
 }
