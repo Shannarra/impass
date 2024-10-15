@@ -17,14 +17,14 @@ fn read_and_verify_input(content: &mut Vec<u8>, filename: &String) {
 }
 
 pub fn gimme_bytecode(config: &config::Config, content: &mut Vec<u8>) -> usize {
-    read_and_verify_input(content, config.file_to_read());
+    read_and_verify_input(content, &config.file_to_read().clone().unwrap());
 
     if let Some(idx) = index_vec(content, &constants::EOF_SIGNATURE) {
         idx
     } else {
         crate::error!(format!(
             "File is not a valid PNG: {}",
-            config.file_to_read()
+            config.file_to_read().clone().unwrap()
         ));
     }
 }

@@ -1,6 +1,6 @@
 use crate::error;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub enum Mode {
     Write,
     Read,
@@ -11,59 +11,57 @@ pub enum Mode {
 
 #[derive(Debug, Default)]
 pub struct Config {
-    read_file: String,
-    write_file: String,
-    pub in_file: String,
-    pub out_file: String,
-    pub file: String,
-    pub password: String,
+    read_file: Option<String>,
+    write_file: Option<String>,
+    file: Option<String>,
+    pub password: Option<String>,
+    pub mode: Mode,
+    pub output_file: String,
 }
 
 impl Config {
-    pub fn set(&mut self, mode: Mode, file: String) {
-        match mode {
-            Mode::Read => self.in_file = file,
-            Mode::Write => {
-                self.out_file = file;
-            }
-            Mode::File => {
-                self.file = file;
-            }
-
-            _ => panic!("Should never be reached!"),
+    fn set_mode(mut self) -> Self {
+        if self.file.is_some() {
+            self.mode = Mode::File;
         }
+
+        if self.read_file.is_some() {
+            self.mode = Mode::Read;
+        }
+
+        self
+    }
+
+    fn set_output(mut self) -> Self {
+        if let Some(out) = &self.write_file {
+            self.output_file.clone_from(out); // = out.clone();
+        } else {
+            let file = if let Some(f) = &self.file {
+                f
+            } else if let Some(f) = &self.read_file {
+                f
+            } else {
+                unreachable!()
+            }
+            .clone();
+
+            let path = std::path::Path::new(&file);
+            self.output_file = format!("result/{}", path.file_name().unwrap().to_str().unwrap());
+        }
+
+        self
+    }
+
+    fn checked(self) -> Self {
+        if self.mode == Mode::Write && self.file_to_read().is_none() {
+            error!("A file name to write (output) was provided, but no file to use was given");
+        } // we good
+
+        self
     }
 
     pub fn set_password(&mut self, pass: String) {
-        self.password = pass;
-    }
-
-    pub fn filtered(mut self) -> Self {
-        //if we have in_file don't care about the -file flag
-        if !self.in_file.is_empty() {
-            self.file.clear();
-            self.read_file.clone_from(&self.in_file); //.clone();
-        } else if self.file.is_empty() {
-            // no in_file, is there a file?
-            error!("No file to use provided.");
-        } else {
-            self.read_file.clone_from(&self.file); //.clone();
-        }
-
-        self.write_file = if self.out_file.is_empty() {
-            let path = std::path::Path::new(&self.read_file);
-            if let Some(filename) = path.file_name() {
-                format!("result/{}", filename.to_str().unwrap())
-            } else {
-                error!(format!(
-                    "Input given for file is not a valid path: {path:?}"
-                ));
-            }
-        } else {
-            self.out_file.clone()
-        };
-
-        self
+        self.password = Some(pass);
     }
 
     pub fn print_help(&self) {
@@ -88,10 +86,10 @@ Where available options are:
 
         while idx < argv.len() {
             match argv[idx].as_str() {
-                "-o" => {
+                "-o" | "--output" => {
                     if let Some(out_file) = argv.get(idx + 1) {
                         idx += 1;
-                        config.set(Mode::Write, out_file.clone());
+                        config.write_file = Some(out_file.to_string());
                     } else {
                         error!(format!(
                             "File name must be provided after the {} flag!",
@@ -99,10 +97,10 @@ Where available options are:
                         ));
                     }
                 }
-                "-i" => {
+                "-i" | "--input" => {
                     if let Some(in_file) = argv.get(idx + 1) {
                         idx += 1;
-                        config.set(Mode::Read, in_file.clone());
+                        config.read_file = Some(in_file.to_string());
                     } else {
                         error!(format!(
                             "File name must be provided after the {} flag!",
@@ -110,10 +108,10 @@ Where available options are:
                         ));
                     }
                 }
-                "-f" => {
+                "-f" | "--file" => {
                     if let Some(write_file) = argv.get(idx + 1) {
                         idx += 1;
-                        config.set(Mode::File, write_file.clone());
+                        config.file = Some(write_file.to_string());
                     } else {
                         error!(format!(
                             "File name must be provided after the {} flag!",
@@ -121,13 +119,13 @@ Where available options are:
                         ));
                     }
                 }
-                "-p" => {
+                "-p" | "--pass" => {
                     if let Some(pass) = argv.get(idx + 1) {
                         idx += 1;
                         config.set_password(pass.clone());
                     }
                 }
-                "-h" => {
+                "-h" | "--help" => {
                     config.print_help();
                     std::process::exit(0);
                 }
@@ -139,14 +137,14 @@ Where available options are:
             idx += 1;
         }
 
-        config.filtered()
+        config.set_mode().set_output().checked()
     }
 
-    pub fn file_to_read(&self) -> &String {
-        &self.read_file
-    }
-
-    pub fn file_to_write(&self) -> &String {
-        &self.write_file
+    pub fn file_to_read(&self) -> &Option<String> {
+        match self.mode {
+            Mode::File => &self.file,
+            Mode::Read => &self.read_file,
+            _ => &None,
+        }
     }
 }

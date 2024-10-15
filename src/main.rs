@@ -1,25 +1,8 @@
 mod config;
-mod util;
-
-// fn write_image(content: &mut Vec<u8>, output: &String) {
-// 		if let Some(idx) = util::index_vec(content, &util::constants::EOF_SIGNATURE) {
-// 				let write_idx = idx + util::constants::EOF_SIGNATURE.len() - 1;
-
-// 				content.extend((69000_i32).to_be_bytes());
-// 		} else {
-// 				error!("Could not find PNG EOF signature!");
-// 		}
-
-// 		let output: &std::path::Path = std::path::Path::new(output);
-
-// 		let _ = std::fs::write(output, &content);
-
-// 		println!("{content:?}");
-
-// 		println!("Done!");
-// }
-
+mod impass;
+mod macros;
 mod reading;
+mod util;
 
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
@@ -28,10 +11,22 @@ fn main() {
     let mut content = Vec::new();
     let index: usize = reading::gimme_bytecode(&config, &mut content);
 
-    if config.in_file.is_empty() {
+    if config.mode == config::Mode::File {
+        // We'll encode something, so get a secret
         let input = util::prompt("Enter your secret");
-        println!("Input: {input}");
+
+        impass::encoder::encode(&config, &input, index);
+        println!(
+            "Encoding into {}, using contents from {}... PASSWORD = {pass} and secret = {input}",
+            config.output_file,
+            config.file_to_read().clone().unwrap(),
+            pass = if config.password.is_some() {
+                config.password.unwrap()
+            } else {
+                "[none provided]".to_string()
+            }
+        );
     } else {
-        println!("Decoding... {}", config.in_file);
+        println!("Decoding... {}", config.file_to_read().clone().unwrap());
     }
 }
