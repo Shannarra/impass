@@ -20,6 +20,7 @@ pub fn encode(config: &crate::config::Config, input: &String, index: usize) {
     println!("{:?}", Encoder::new(config, input, index));
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 struct Encoder<'a> {
     config: &'a crate::config::Config,

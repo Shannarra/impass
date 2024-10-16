@@ -29,6 +29,10 @@ impl Config {
             self.mode = Mode::Read;
         }
 
+        if self.mode == Mode::Unknown {
+            self.mode = Mode::Write;
+        }
+
         self
     }
 
@@ -145,6 +149,111 @@ Where available options are:
             Mode::File => &self.file,
             Mode::Read => &self.read_file,
             _ => &None,
+        }
+    }
+}
+
+mod test {
+    mod config {
+        #[test]
+        fn can_create_config_from_valid_args() {
+            let cfg = super::super::Config::from_args(&[
+                "--".to_string(), // needed to distinguish the initial arg (program name)
+                "-f".to_string(),
+                "images/cat.png".to_string(),
+                "-o".to_string(),
+                "out/output.png".to_string(),
+                "-i".to_string(),
+                "images/input.png".to_string(),
+            ]);
+
+            // File mode got overwritten by last -i
+            assert_eq!(cfg.mode, super::super::Mode::Read);
+            // The in_file was also overwritten
+            assert_eq!(cfg.file_to_read(), &Some("images/input.png".to_owned()));
+            assert_eq!(cfg.output_file, "out/output.png".to_owned());
+            assert_eq!(cfg.password, None);
+        }
+
+        #[test]
+        fn can_create_config_from_valid_args_with_pass() {
+            let cfg = super::super::Config::from_args(&[
+                "--".to_string(), // needed to distinguish the initial arg (program name)
+                "-f".to_string(),
+                "images/cat.png".to_string(),
+                "-o".to_string(),
+                "out/output.png".to_string(),
+                "-i".to_string(),
+                "images/input.png".to_string(),
+                "--pass".to_string(),
+                "password123!".to_string(),
+            ]);
+
+            // File mode got overwritten by last -i
+            assert_eq!(cfg.mode, super::super::Mode::Read);
+            // The in_file was also overwritten
+            assert_eq!(cfg.file_to_read(), &Some("images/input.png".to_owned()));
+            assert_eq!(cfg.output_file, "out/output.png".to_owned());
+            assert_eq!(cfg.password, Some("password123!".to_string()));
+        }
+
+        #[test]
+        #[should_panic(expected = "An argument for image must be provided!")]
+        fn cant_create_config_from_invalid_args() {
+            let _ = super::super::Config::from_args(&[
+                "--".to_string(), // needed to distinguish the initial arg (program name),
+            ]);
+            // none
+        }
+
+        #[test]
+        #[should_panic(
+            expected = "A file name to write (output) was provided, but no file to use was given"
+        )]
+        fn cant_create_config_with_unfinished_args() {
+            let _ = super::super::Config::from_args(&[
+                "--".to_string(), // needed to distinguish the initial arg (program name),
+                "-o".to_string(),
+                "out/output.png".to_string(),
+            ]);
+            // none
+        }
+
+        // flags
+        #[test]
+        #[should_panic(expected = "File name must be provided after the -o flag!")]
+        fn test_invalid_o_flag() {
+            let _ = super::super::Config::from_args(&[
+                "--".to_string(), // needed to distinguish the initial arg (program name),
+                "-o".to_string(),
+            ]);
+        }
+
+        #[test]
+        #[should_panic(expected = "File name must be provided after the -f flag!")]
+        fn test_invalid_f_flag() {
+            let _ = super::super::Config::from_args(&[
+                "--".to_string(), // needed to distinguish the initial arg (program name),
+                "-f".to_string(),
+            ]);
+        }
+
+        #[test]
+        #[should_panic(expected = "File name must be provided after the -i flag!")]
+        fn test_invalid_i_flag() {
+            let _ = super::super::Config::from_args(&[
+                "--".to_string(), // needed to distinguish the initial arg (program name),
+                "-i".to_string(),
+            ]);
+        }
+
+        #[test]
+        #[should_panic(expected = "Unrecognized option or flag -asdkashdkajsdhkhk")]
+        fn test_invalid_x_flag() {
+            let _ = super::super::Config::from_args(&[
+                "--".to_string(), // needed to distinguish the initial arg (program name),
+                "-asdkashdkajsdhkhk".to_string(),
+            ]);
         }
     }
 }
