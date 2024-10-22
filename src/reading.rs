@@ -74,7 +74,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "No such file or directory (os error 2)")]
+    #[should_panic(expected = "The given file to read \"nonexistent.shit\" does not exist!")]
     fn incorrect_input_bytecode() {
         let cfg = super::config::Config::from_args(&[
             "--".to_string(), // needed to distinguish the initial arg (program name)

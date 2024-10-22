@@ -11,13 +11,13 @@ fn main() {
     let mut content = Vec::new();
     let index: usize = reading::gimme_bytecode(&config, &mut content);
 
-    if config.mode == config::Mode::File {
+    if config.mode == config::Mode::File || config.mode == config::Mode::Write {
         // We'll encode something, so get a secret
         let input = util::prompt("Enter your secret");
 
-        impass::encoder::encode(&config, &input, index);
+        impass::encoder::encode(&config, &mut content, &input, index);
         println!(
-            "Encoding into {}, using contents from {}... PASSWORD = {pass} and secret = {input}",
+            "Encoding into {}, using contents from {}... PASSWORD = \"{pass}\" and secret = {input}",
             config.output_file,
             config.file_to_read().clone().unwrap(),
             pass = if config.password.is_some() {

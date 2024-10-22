@@ -59,7 +59,13 @@ impl Config {
     fn checked(self) -> Self {
         if self.mode == Mode::Write && self.file_to_read().is_none() {
             error!("A file name to write (output) was provided, but no file to use was given");
-        } // we good
+        } // we good with mode
+
+        if let Some(file) = self.file_to_read() {
+            if !std::path::Path::new(&file).exists() {
+                error!(format!("The given file to read \"{file}\" does not exist!"))
+            }
+        }
 
         self
     }
@@ -164,13 +170,13 @@ mod test {
                 "-o".to_string(),
                 "out/output.png".to_string(),
                 "-i".to_string(),
-                "images/input.png".to_string(),
+                "images/harold.png".to_string(),
             ]);
 
             // File mode got overwritten by last -i
             assert_eq!(cfg.mode, super::super::Mode::Read);
             // The in_file was also overwritten
-            assert_eq!(cfg.file_to_read(), &Some("images/input.png".to_owned()));
+            assert_eq!(cfg.file_to_read(), &Some("images/harold.png".to_owned()));
             assert_eq!(cfg.output_file, "out/output.png".to_owned());
             assert_eq!(cfg.password, None);
         }
@@ -184,7 +190,7 @@ mod test {
                 "-o".to_string(),
                 "out/output.png".to_string(),
                 "-i".to_string(),
-                "images/input.png".to_string(),
+                "images/harold.png".to_string(),
                 "--pass".to_string(),
                 "password123!".to_string(),
             ]);
@@ -192,7 +198,7 @@ mod test {
             // File mode got overwritten by last -i
             assert_eq!(cfg.mode, super::super::Mode::Read);
             // The in_file was also overwritten
-            assert_eq!(cfg.file_to_read(), &Some("images/input.png".to_owned()));
+            assert_eq!(cfg.file_to_read(), &Some("images/harold.png".to_owned()));
             assert_eq!(cfg.output_file, "out/output.png".to_owned());
             assert_eq!(cfg.password, Some("password123!".to_string()));
         }
