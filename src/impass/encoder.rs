@@ -16,10 +16,6 @@
 // 		println!("Done!");
 // }
 
-use std::hash::Hasher;
-
-use crate::impass;
-
 /// Encodes the given secret into an
 /// image (provided via config)
 /// @param config - the Config for the current run
@@ -80,7 +76,7 @@ impl<'a> Encoder<'a> {
 
     fn encode(&mut self) {
         if let Some(pass) = &self.config.password {
-            self.use_pass(&pass);
+            self.use_pass(pass);
         }
 
         let impassible = self.impassible_hash(self.secret);
@@ -94,7 +90,7 @@ impl<'a> Encoder<'a> {
         println!("Content from {bytesecret:?}");
         self.content.push(bytesecret.len() as u8);
         self.content.extend(bytesecret);
-        if let Err(_) = std::fs::write(&self.config.output_file, &self.content) {
+        if std::fs::write(&self.config.output_file, &self.content).is_err() {
             std::fs::create_dir(&self.config.output_file).unwrap();
 
             std::fs::write(&self.config.output_file, &self.content).unwrap();
