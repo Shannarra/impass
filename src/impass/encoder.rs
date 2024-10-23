@@ -79,17 +79,15 @@ impl<'a> Encoder<'a> {
             self.use_pass(pass);
         }
 
-        let impassible = self.impassible_hash(self.secret);
-        let crypt = bcrypt::hash(impassible.to_string(), 15).unwrap();
+        let secret: String = self.secret.chars().rev().collect();
 
-        println!("Overencryption: {crypt}",);
-        println!("And its hash: {:?}", crypt.as_bytes());
+        let crypt = crate::util::crypt::encrypt_secret(&secret); // bcrypt::hash(secret, crate::util::constants::BCRYPT_COST).unwrap();
+        println!("Overencryption: {crypt:?}");
 
-        let bytesecret = crypt.as_bytes();
+        println!("Decrypted: {}", crate::util::crypt::decrypt_secret(&crypt));
 
-        println!("Content from {bytesecret:?}");
-        self.content.push(bytesecret.len() as u8);
-        self.content.extend(bytesecret);
+        self.content.push(crypt.len() as u8);
+        self.content.extend(crypt);
         if std::fs::write(&self.config.output_file, &self.content).is_err() {
             std::fs::create_dir(&self.config.output_file).unwrap();
 
@@ -97,24 +95,5 @@ impl<'a> Encoder<'a> {
         } else {
             println!("Done :)");
         }
-    }
-
-    // Basically Jenkins Hash to work over bcrypt
-    fn impassible_hash<T>(&mut self, item: &T) -> u128
-    where
-        T: std::hash::Hash + std::string::ToString,
-    {
-        let key = item.to_string();
-        let mut hash = 0u128;
-        for c in key.chars() {
-            let tmp = c as u128;
-            hash += tmp;
-            hash += hash << 10;
-            hash ^= hash >> 6;
-        }
-        hash += hash << 3;
-        hash ^= hash >> 11;
-        hash += hash << 15;
-        hash
     }
 }

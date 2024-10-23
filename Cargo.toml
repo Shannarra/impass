@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 bcrypt = "*"
+openssl = "0.10.68"
