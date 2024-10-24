@@ -17,6 +17,7 @@ pub struct Config {
     pub password: Option<String>,
     pub mode: Mode,
     pub output_file: String,
+    pub env: std::collections::HashMap<String, String>,
 }
 
 impl Config {
@@ -52,6 +53,12 @@ impl Config {
             let path = std::path::Path::new(&file);
             self.output_file = format!("result/{}", path.file_name().unwrap().to_str().unwrap());
         }
+
+        self
+    }
+
+    pub fn with_env(mut self, env: std::collections::HashMap<String, String>) -> Self {
+        self.env = env;
 
         self
     }

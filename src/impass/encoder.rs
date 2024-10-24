@@ -81,10 +81,13 @@ impl<'a> Encoder<'a> {
 
         let secret: String = self.secret.chars().rev().collect();
 
-        let crypt = crate::util::crypt::encrypt_secret(&secret); // bcrypt::hash(secret, crate::util::constants::BCRYPT_COST).unwrap();
+        let crypt = crate::util::crypt::encrypt_secret(&secret, &self.config.env); // bcrypt::hash(secret, crate::util::constants::BCRYPT_COST).unwrap();
         println!("Overencryption: {crypt:?}");
 
-        println!("Decrypted: {}", crate::util::crypt::decrypt_secret(&crypt));
+        println!(
+            "Decrypted: {}",
+            crate::util::crypt::decrypt_secret(&crypt, secret.len(), &self.config.env)
+        );
 
         self.content.push(crypt.len() as u8);
         self.content.extend(crypt);

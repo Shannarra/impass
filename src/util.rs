@@ -7,12 +7,67 @@ pub mod constants {
 
 #[allow(dead_code, unused_variables)]
 pub mod crypt {
-    pub fn encrypt_secret(secret: &str) -> Vec<u8> {
-        vec![]
+    type Env = std::collections::HashMap<String, String>;
+
+    fn check_env_vars(env: Env) -> Env {
+        if let Some(shr) = env.get("RSHIFT") {
+            let val = shr.parse::<u32>();
+            if val.is_err() {
+                crate::error!("Number provided for RSHIFT must be a positive whole number!")
+            }
+        }
+
+        if let Some(shl) = env.get("LSHIFT") {
+            let val = shl.parse::<u32>();
+            if val.is_err() {
+                crate::error!("Number provided for LSHIFT must be a positive whole number!")
+            }
+        }
+
+        env
     }
 
-    pub fn decrypt_secret(encrypted: &[u8]) -> String {
-        encrypted.iter().map(|x| *x as char).collect()
+    pub fn collect_env(env: Env) -> Env {
+        let env = self::check_env_vars(env);
+        Env::from([
+            (
+                "rshift".to_string(),
+                env.get("RSHIFT").unwrap_or(&"15".to_string()).to_owned(),
+            ),
+            (
+                "lshift".to_string(),
+                env.get("LSHIFT").unwrap_or(&"11".to_string()).to_owned(),
+            ),
+        ])
+    }
+
+    pub fn encrypt_secret(secret: &str, env: &Env) -> Vec<u8> {
+        /*let shr: i32 = env["rshift"].parse::<i32>().unwrap();
+              let shl: i32 = env["lshift"].parse::<i32>().unwrap();
+        */
+        println!("{}", (secret.chars().next().unwrap() as u32) << 5);
+        secret
+            .chars()
+            .enumerate()
+            .map(|(idx, x)| (x as u32))
+            .map(|x| x as u8)
+            .collect::<Vec<u8>>()
+    }
+
+    pub fn decrypt_secret(encrypted: &[u8], len: usize, env: &Env) -> String {
+        /*       let shr: usize = env["rshift"].parse::<usize>().unwrap();
+               let shl: usize = env["lshift"].parse::<usize>().unwrap();
+        */
+        println!("{encrypted:?}");
+        let text: String = encrypted
+            .iter()
+            .enumerate()
+            .map(|(idx, x)| (*x as u8))
+            .map(|x| x as u8 as char)
+            .rev()
+            .collect();
+
+        text
     }
 }
 

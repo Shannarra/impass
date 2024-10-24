@@ -5,8 +5,13 @@ mod reading;
 mod util;
 
 fn main() {
+    dotenv::dotenv().ok();
+
+    let env = std::env::vars().collect::<std::collections::HashMap<String, String>>();
     let argv: Vec<String> = std::env::args().collect();
-    let config = config::Config::from_args(&argv);
+
+    let simplified_env = util::crypt::collect_env(env);
+    let config = config::Config::from_args(&argv).with_env(simplified_env);
 
     let mut content = Vec::new();
     let index: usize = reading::gimme_bytecode(&config, &mut content);
