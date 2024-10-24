@@ -61,9 +61,9 @@ pub mod crypt {
         println!("{encrypted:?}");
         let text: String = encrypted
             .iter()
-            .enumerate()
-            .map(|(idx, x)| (*x as u8))
-            .map(|x| x as u8 as char)
+            //.enumerate()
+            //.map(|(idx, x)| (*x as u8))
+            .map(|x| *x as char)
             .rev()
             .collect();
 
