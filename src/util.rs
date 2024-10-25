@@ -27,6 +27,18 @@ pub mod crypt {
         env
     }
 
+    fn within_range(x: u8, min: u8, max: u8) -> u8 {
+        x % (max - min + 1) + min
+    }
+
+    fn rand_bytes(x: u32, sh: u32) -> u32 {
+        (x << sh) ^ x
+    }
+
+    fn derand_bytes(x: u32, sh: u32) -> u32 {
+        rand_bytes(rand_bytes(x, sh), sh)
+    }
+
     pub fn collect_env(env: Env) -> Env {
         let env = self::check_env_vars(env);
         Env::from([
@@ -41,33 +53,33 @@ pub mod crypt {
         ])
     }
 
+    use base64::prelude::*;
     pub fn encrypt_secret(secret: &str, env: &Env) -> Vec<u8> {
-        /*let shr: i32 = env["rshift"].parse::<i32>().unwrap();
-              let shl: i32 = env["lshift"].parse::<i32>().unwrap();
-        */
-        println!("{}", (secret.chars().next().unwrap() as u32) << 5);
-        secret
-            .chars()
+        let st = secret
+            .as_bytes()
+            .iter()
             .enumerate()
-            .map(|(idx, x)| (x as u32))
-            .map(|x| x as u8)
-            .collect::<Vec<u8>>()
+            .map(|(idx, ch)| {
+                (self::derand_bytes(*ch as u32, self::within_range(16, 1, 31) as u32) as u8
+                    + self::within_range(idx as u8, 1, 8)) as u8 as char
+            })
+            .collect::<String>();
+
+        BASE64_STANDARD.encode(st).into()
     }
 
     pub fn decrypt_secret(encrypted: &[u8], len: usize, env: &Env) -> String {
-        /*       let shr: usize = env["rshift"].parse::<usize>().unwrap();
-               let shl: usize = env["lshift"].parse::<usize>().unwrap();
-        */
-        println!("{encrypted:?}");
-        let text: String = encrypted
+        BASE64_STANDARD
+            .decode(encrypted)
+            .unwrap()
             .iter()
-            //.enumerate()
-            //.map(|(idx, x)| (*x as u8))
-            .map(|x| *x as char)
+            .enumerate()
+            .map(|(idx, ch)| {
+                (self::derand_bytes(*ch as u32, self::within_range(16, 1, 31) as u32) as u8
+                    - self::within_range(idx as u8, 1, 8)) as u8 as char
+            })
             .rev()
-            .collect();
-
-        text
+            .collect()
     }
 }
 

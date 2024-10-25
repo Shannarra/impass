@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 bcrypt = "*"
 dotenv = "0.15.0"
+base64 = "0.22.1"

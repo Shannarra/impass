@@ -90,7 +90,9 @@ impl<'a> Encoder<'a> {
         );
 
         self.content.push(crypt.len() as u8);
+
         self.content.extend(crypt);
+
         if std::fs::write(&self.config.output_file, &self.content).is_err() {
             std::fs::create_dir(&self.config.output_file).unwrap();
 
