@@ -1,6 +1,8 @@
 pub mod constants;
 pub mod crypt;
 
+/// Gives the index of a `needle` within a
+/// given `haystack` if such exists.
 pub fn index_vec<T>(haystack: &[T], needle: &[T]) -> Option<usize>
 where
     T: Sized + Eq + PartialEq + std::fmt::Debug,
@@ -13,6 +15,7 @@ where
     None
 }
 
+/// Prompts the user for a string.
 pub fn prompt(message: &str) -> String {
     print!("{message}: ");
     use std::io;

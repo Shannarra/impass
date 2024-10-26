@@ -1,5 +1,7 @@
 use crate::error;
 
+/// The mode in which the config will work for
+/// the current run.
 #[derive(Debug, Default, PartialEq)]
 pub enum Mode {
     Write,
@@ -9,6 +11,10 @@ pub enum Mode {
     Unknown,
 }
 
+/// A simple configuration setup for the
+/// run. Exposes a password, mode, output
+/// file and environment to be propagated and used
+/// during runtime for both encryption/decription.
 #[derive(Debug, Default)]
 pub struct Config {
     read_file: Option<String>,
@@ -21,6 +27,7 @@ pub struct Config {
 }
 
 impl Config {
+    /// Sets a mode by modifying self. Defaults to Write.
     fn set_mode(mut self) -> Self {
         if self.file.is_some() {
             self.mode = Mode::File;
@@ -37,6 +44,8 @@ impl Config {
         self
     }
 
+    /// Sets the output file by modifying self.
+    /// Useful as an accessor down the work process.
     fn set_output(mut self) -> Self {
         if let Some(out) = &self.write_file {
             self.output_file.clone_from(out); // = out.clone();
@@ -57,12 +66,15 @@ impl Config {
         self
     }
 
+    /// Sets an env by modifying self.
     pub fn with_env(mut self, env: std::collections::HashMap<String, String>) -> Self {
         self.env = env;
 
         self
     }
 
+    /// Checks if configuration is valid before
+    /// allowing it to propagate in runtime.
     fn checked(self) -> Self {
         if self.mode == Mode::Write && self.file_to_read().is_none() {
             error!("A file name to write (output) was provided, but no file to use was given");
@@ -77,10 +89,12 @@ impl Config {
         self
     }
 
+    /// Sets a password for self.
     pub fn set_password(&mut self, pass: String) {
         self.password = Some(pass);
     }
 
+    /// A help message.
     pub fn print_help(&self) {
         println!(
             "Usage: impass [OPTIONS]\n
@@ -93,6 +107,9 @@ Where available options are:
         );
     }
 
+    /// Constructs a Self from a list of args.
+    /// Expected to be command-line provided, but
+    /// could also be just in cli-style.
     pub fn from_args(argv: &[String]) -> Config {
         if argv.len() < 2 {
             error!("An argument for image must be provided!");
@@ -157,6 +174,7 @@ Where available options are:
         config.set_mode().set_output().checked()
     }
 
+    /// An accessor to the input file the runtime will use.
     pub fn file_to_read(&self) -> &Option<String> {
         match self.mode {
             Mode::File => &self.file,

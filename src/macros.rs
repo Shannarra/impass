@@ -1,3 +1,5 @@
+/// A generic error facilitation macro.
+/// Errors and exits with status 1.
 #[macro_export]
 macro_rules! error {
 		( $( $x:expr ),* ) => {
@@ -15,6 +17,7 @@ macro_rules! error {
 		};
 }
 
+/// Unreachable code error, hopefully is never to be displayed.
 #[macro_export]
 macro_rules! unreachable {
     ( $( $x:expr), *) => {{

@@ -1,6 +1,9 @@
 use crate::config;
 use crate::utils::{constants, index_vec};
 
+/// Verifies that the given `filename` exists
+/// and is a path to a PNG image.
+/// If so - yields the bytecode contents to the caller buffer.
 fn read_and_verify_input(content: &mut Vec<u8>, filename: &String) {
     let file = std::fs::read(filename);
     if let Err(err) = file {
@@ -16,6 +19,8 @@ fn read_and_verify_input(content: &mut Vec<u8>, filename: &String) {
     content.extend(text);
 }
 
+/// Checks the bytecode content of a given file. If your file does not
+/// start AND end with a PNG signature - you've got problems. :)
 pub fn gimme_bytecode(config: &config::Config, content: &mut Vec<u8>) -> usize {
     read_and_verify_input(content, &config.file_to_read().clone().unwrap());
 
