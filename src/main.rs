@@ -18,7 +18,7 @@ fn main() {
 
     if config.mode == config::Mode::File || config.mode == config::Mode::Write {
         // We'll encode something, so get a secret
-        let input = utils::prompt("Enter your secret");
+        let input = utils::pompt("Enter your secret");
 
         impass::encoder::encode(&config, &mut content, &input, index);
         println!(
