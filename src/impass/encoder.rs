@@ -89,6 +89,11 @@ impl<'a> Encoder<'a> {
             crate::util::crypt::decrypt_secret(&crypt, secret.len(), &self.config.env)
         );
 
+        assert_eq!(
+            &crate::util::crypt::decrypt_secret(&crypt, secret.len(), &self.config.env),
+            self.secret
+        );
+
         self.content.push(crypt.len() as u8);
 
         self.content.extend(crypt);

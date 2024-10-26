@@ -10,17 +10,24 @@ pub mod crypt {
     type Env = std::collections::HashMap<String, String>;
 
     fn check_env_vars(env: Env) -> Env {
-        if let Some(shr) = env.get("RSHIFT") {
+        if let Some(shr) = env.get("SHIFT") {
             let val = shr.parse::<u32>();
             if val.is_err() {
-                crate::error!("Number provided for RSHIFT must be a positive whole number!")
+                crate::error!("Number provided for SHIFT must be a positive whole number!")
             }
         }
 
-        if let Some(shl) = env.get("LSHIFT") {
-            let val = shl.parse::<u32>();
+        if let Some(godnum) = env.get("GODNUM") {
+            let val = godnum.parse::<u32>();
             if val.is_err() {
-                crate::error!("Number provided for LSHIFT must be a positive whole number!")
+                crate::error!("Number provided for GODNUM must be a positive whole number!")
+            }
+        }
+
+        if let Some(xor) = env.get("XOR") {
+            let val = xor.parse::<u32>();
+            if val.is_err() {
+                crate::error!("Number provided for XOR must be a positive whole number!")
             }
         }
 
@@ -31,37 +38,52 @@ pub mod crypt {
         x % (max - min + 1) + min
     }
 
-    fn rand_bytes(x: u32, sh: u32) -> u32 {
-        (x << sh) ^ x
+    #[allow(clippy::precedence)] // disable the false-positive ambiguous precedence
+    fn rand_bytes(x: u32, sh: u32, pepper: u32, gn: u32, xor: u32) -> u32 {
+        ((gn + (x << sh) ^ x) ^ xor) ^ pepper
     }
 
-    fn derand_bytes(x: u32, sh: u32) -> u32 {
-        rand_bytes(rand_bytes(x, sh), sh)
+    fn derand_bytes(x: u32, sh: u32, pepper: u32, gn: u32, xor: u32) -> u32 {
+        rand_bytes(x ^ pepper, sh, pepper, gn, xor) ^ pepper
     }
 
     pub fn collect_env(env: Env) -> Env {
         let env = self::check_env_vars(env);
         Env::from([
             (
-                "rshift".to_string(),
-                env.get("RSHIFT").unwrap_or(&"15".to_string()).to_owned(),
+                "shift".to_string(),
+                env.get("SHIFT").unwrap_or(&"11".to_string()).to_owned(),
             ),
             (
-                "lshift".to_string(),
-                env.get("LSHIFT").unwrap_or(&"11".to_string()).to_owned(),
+                "godnum".to_string(),
+                env.get("GODNUM").unwrap_or(&"42".to_string()).to_owned(),
+            ),
+            (
+                "xor".to_string(),
+                env.get("XOR").unwrap_or(&"69".to_string()).to_owned(),
             ),
         ])
     }
 
     use base64::prelude::*;
     pub fn encrypt_secret(secret: &str, env: &Env) -> Vec<u8> {
+        let shift: u32 = env[&"shift".to_string()].clone().parse().unwrap();
+        let godnum: u32 = env[&"godnum".to_string()].clone().parse().unwrap();
+        let xor: u32 = env[&"xor".to_string()].clone().parse().unwrap();
+
         let st = secret
             .as_bytes()
             .iter()
             .enumerate()
             .map(|(idx, ch)| {
-                (self::derand_bytes(*ch as u32, self::within_range(16, 1, 31) as u32) as u8
-                    + self::within_range(idx as u8, 1, 8)) as u8 as char
+                (self::rand_bytes(
+                    *ch as u32,
+                    self::within_range(shift as u8, 1, 31) as u32,
+                    self::within_range(idx as u8, 1, 8) as u32,
+                    godnum,
+                    xor,
+                ) as u8
+                    ^ within_range(shift as u8, 7, 30)) as char
             })
             .collect::<String>();
 
@@ -69,14 +91,24 @@ pub mod crypt {
     }
 
     pub fn decrypt_secret(encrypted: &[u8], len: usize, env: &Env) -> String {
+        let shift: u32 = env[&"shift".to_string()].clone().parse().unwrap();
+        let godnum: u32 = env[&"godnum".to_string()].clone().parse().unwrap();
+        let xor: u32 = env[&"xor".to_string()].clone().parse().unwrap();
+
         BASE64_STANDARD
             .decode(encrypted)
             .unwrap()
             .iter()
             .enumerate()
             .map(|(idx, ch)| {
-                (self::derand_bytes(*ch as u32, self::within_range(16, 1, 31) as u32) as u8
-                    - self::within_range(idx as u8, 1, 8)) as u8 as char
+                (self::derand_bytes(
+                    *ch as u32,
+                    self::within_range(shift as u8, 1, 31) as u32,
+                    self::within_range(idx as u8, 1, 8) as u32,
+                    godnum,
+                    xor,
+                ) as u8
+                    ^ within_range(shift as u8, 7, 30)) as char
             })
             .rev()
             .collect()
