@@ -1,21 +1,3 @@
-// fn write_image(content: &mut Vec<u8>, output: &String) {
-// 		if let Some(idx) = util::index_vec(content, &util::constants::EOF_SIGNATURE) {
-// 				let write_idx = idx + util::constants::EOF_SIGNATURE.len() - 1;
-
-// 				content.extend((69000_i64).to_be_bytes());
-// 		} else {
-// 				error!("Could not find PNG EOF signature!");
-// 		}
-
-// 		let output: &std::path::Path = std::path::Path::new(output);
-
-// 		let _ = std::fs::write(output, &content);
-
-// 		println!("{content:?}");
-
-// 		println!("Done!");
-// }
-
 /// Encodes the given secret into an
 /// image (provided via config)
 /// @param config - the Config for the current run
@@ -81,16 +63,16 @@ impl<'a> Encoder<'a> {
 
         let secret: String = self.secret.chars().rev().collect();
 
-        let crypt = crate::util::crypt::encrypt_secret(&secret, &self.config.env); // bcrypt::hash(secret, crate::util::constants::BCRYPT_COST).unwrap();
+        let crypt = crate::utils::crypt::encrypt_secret(&secret, &self.config.env);
         println!("Overencryption: {crypt:?}");
 
         println!(
             "Decrypted: {}",
-            crate::util::crypt::decrypt_secret(&crypt, secret.len(), &self.config.env)
+            crate::utils::crypt::decrypt_secret(&crypt, &self.config.env)
         );
 
         assert_eq!(
-            &crate::util::crypt::decrypt_secret(&crypt, secret.len(), &self.config.env),
+            &crate::utils::crypt::decrypt_secret(&crypt, &self.config.env),
             self.secret
         );
 
@@ -107,3 +89,6 @@ impl<'a> Encoder<'a> {
         }
     }
 }
+
+// TODO: tests
+mod test {}

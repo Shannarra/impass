@@ -1,5 +1,5 @@
 use crate::config;
-use crate::util::{constants, index_vec};
+use crate::utils::{constants, index_vec};
 
 fn read_and_verify_input(content: &mut Vec<u8>, filename: &String) {
     let file = std::fs::read(filename);
