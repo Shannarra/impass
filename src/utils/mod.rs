@@ -1,5 +1,6 @@
 pub mod constants;
 pub mod crypt;
+pub mod env;
 
 /// Gives the index of a `needle` within a
 /// given `haystack` if such exists.
@@ -45,4 +46,33 @@ where
     hash ^= hash >> 11;
     hash += hash << 15;
     hash
+}
+
+/// Constraints a given number to bounds of min < x < max
+fn within_range(x: u8, min: u8, max: u8) -> u8 {
+    x % (max - min + 1) + min
+}
+
+/// A very simple "random" number generation constraint to
+/// the bounds of u8 (0-255)
+fn rand() -> u8 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .subsec_nanos() as u8
+}
+
+type Env = std::collections::HashMap<String, String>;
+
+mod test {
+    #[test]
+    fn within_range_works() {
+        let nums = [123, 53, 97, 45, 65];
+
+        for n in nums {
+            let res = super::within_range(n, 1, 10);
+
+            assert!(res > 1 && res < 10);
+        }
+    }
 }

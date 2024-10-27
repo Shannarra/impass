@@ -24,3 +24,12 @@ macro_rules! unreachable {
         $(error!("Should be unreachable"))*
     }};
 }
+
+/// A generic info facilitation macro.
+/// Just a fancy-er printf.
+#[macro_export]
+macro_rules! info {
+		( $( $x:expr ),* ) => {{
+						$(println!("[INFO]: {}", $x))*
+		}};
+}

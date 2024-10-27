@@ -163,6 +163,14 @@ Where available options are:
                     config.print_help();
                     std::process::exit(0);
                 }
+                "--create-env" | "--generate-env" => {
+                    idx += 1;
+                    if crate::utils::env::generate_env().is_err() {
+                        error!("Could not generate a config properly!");
+                    } else {
+                        crate::info!("Config was generated successfully!");
+                    }
+                }
                 _ => {
                     config.print_help();
                     error!(format!("Unrecognized option or flag {}", argv[idx]));

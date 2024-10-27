@@ -10,7 +10,7 @@ fn main() {
     let env = std::env::vars().collect::<std::collections::HashMap<String, String>>();
     let argv: Vec<String> = std::env::args().collect();
 
-    let simplified_env = utils::crypt::collect_env(env);
+    let simplified_env = utils::env::collect_env(env);
     let config = config::Config::from_args(&argv).with_env(simplified_env);
 
     let mut content = Vec::new();
@@ -32,6 +32,7 @@ fn main() {
             }
         );
     } else {
+        // todo: add functionality to have number of tries against a password-protected secret
         println!("Decoding... {}", config.file_to_read().clone().unwrap());
     }
 }

@@ -71,10 +71,9 @@ impl<'a> Encoder<'a> {
             crate::utils::crypt::decrypt_secret(&crypt, &self.config.env)
         );
 
-        assert_eq!(
-            &crate::utils::crypt::decrypt_secret(&crypt, &self.config.env),
-            self.secret
-        );
+        if &crate::utils::crypt::decrypt_secret(&crypt, &self.config.env) != self.secret {
+            crate::error!("Your config seems to be incorrect. Please change its values or pass --generate-env once ro regenerate it and try running the program again");
+        }
 
         self.content.push(crypt.len() as u8);
 
