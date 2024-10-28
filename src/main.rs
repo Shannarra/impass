@@ -11,7 +11,7 @@ fn main() {
     let argv: Vec<String> = std::env::args().collect();
 
     let simplified_env = utils::env::collect_env(env);
-    let config = config::Config::from_args(&argv).with_env(simplified_env);
+    let config = config::Config::from_args(&argv, simplified_env);
 
     let mut content = Vec::new();
     let index: usize = reading::gimme_bytecode(&config, &mut content);

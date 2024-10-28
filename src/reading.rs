@@ -65,11 +65,14 @@ mod test {
 
     #[test]
     fn correct_input_bytecode() {
-        let cfg = super::config::Config::from_args(&[
-            "--".to_string(), // needed to distinguish the initial arg (program name)
-            "-f".to_string(),
-            "images/cat.png".to_string(),
-        ]);
+        let cfg = super::config::Config::from_args(
+            &[
+                "--".to_string(), // needed to distinguish the initial arg (program name)
+                "-f".to_string(),
+                "images/cat.png".to_string(),
+            ],
+            super::super::utils::env::collect_env(super::super::utils::Env::new()),
+        );
 
         let mut content = Vec::new();
         let idx = super::gimme_bytecode(&cfg, &mut content);
@@ -81,11 +84,14 @@ mod test {
     #[test]
     #[should_panic(expected = "The given file to read \"nonexistent.shit\" does not exist!")]
     fn incorrect_input_bytecode() {
-        let cfg = super::config::Config::from_args(&[
-            "--".to_string(), // needed to distinguish the initial arg (program name)
-            "-f".to_string(),
-            "nonexistent.shit".to_string(),
-        ]);
+        let cfg = super::config::Config::from_args(
+            &[
+                "--".to_string(), // needed to distinguish the initial arg (program name)
+                "-f".to_string(),
+                "nonexistent.shit".to_string(),
+            ],
+            super::super::utils::env::collect_env(super::super::utils::Env::new()),
+        );
 
         let mut content = Vec::new();
         let _ = super::gimme_bytecode(&cfg, &mut content);

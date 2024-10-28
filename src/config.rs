@@ -1,4 +1,4 @@
-use crate::error;
+use crate::{error, utils};
 
 /// The mode in which the config will work for
 /// the current run.
@@ -103,6 +103,8 @@ Where available options are:
 \t-o, --output\tSet an output file
 \t-f, --file  \tSet a file to read or write
 \t-p, --pass  \tSet a password to protect your file
+\t--create-env OR    | Recreates your environment file
+\t    --generate-env | populating it with pseudo-random values
 "
         );
     }
@@ -110,7 +112,7 @@ Where available options are:
     /// Constructs a Self from a list of args.
     /// Expected to be command-line provided, but
     /// could also be just in cli-style.
-    pub fn from_args(argv: &[String]) -> Config {
+    pub fn from_args(argv: &[String], env: utils::Env) -> Config {
         if argv.len() < 2 {
             error!("An argument for image must be provided!");
         }
@@ -165,10 +167,19 @@ Where available options are:
                 }
                 "--create-env" | "--generate-env" => {
                     idx += 1;
-                    if crate::utils::env::generate_env().is_err() {
-                        error!("Could not generate a config properly!");
-                    } else {
-                        crate::info!("Config was generated successfully!");
+                    if std::path::Path::new(".env").exists() {
+                        let ans = utils::prompt(
+                            "Configuration file already exists on your machine. Regenerate it?",
+                        );
+
+                        let possible_answers = env["answers"].split(',').collect::<Vec<&str>>();
+                        if possible_answers.contains(&ans.to_lowercase().as_str()) {
+                            if crate::utils::env::generate_env().is_err() {
+                                error!("Could not generate a config properly!");
+                            } else {
+                                crate::info!("Config was generated successfully!");
+                            }
+                        }
                     }
                 }
                 _ => {
@@ -179,7 +190,7 @@ Where available options are:
             idx += 1;
         }
 
-        config.set_mode().set_output().checked()
+        config.set_mode().set_output().with_env(env).checked()
     }
 
     /// An accessor to the input file the runtime will use.
@@ -196,15 +207,18 @@ mod test {
     mod config {
         #[test]
         fn can_create_config_from_valid_args() {
-            let cfg = super::super::Config::from_args(&[
-                "--".to_string(), // needed to distinguish the initial arg (program name)
-                "-f".to_string(),
-                "images/cat.png".to_string(),
-                "-o".to_string(),
-                "out/output.png".to_string(),
-                "-i".to_string(),
-                "images/harold.png".to_string(),
-            ]);
+            let cfg = super::super::Config::from_args(
+                &[
+                    "--".to_string(), // needed to distinguish the initial arg (program name)
+                    "-f".to_string(),
+                    "images/cat.png".to_string(),
+                    "-o".to_string(),
+                    "out/output.png".to_string(),
+                    "-i".to_string(),
+                    "images/harold.png".to_string(),
+                ],
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
 
             // File mode got overwritten by last -i
             assert_eq!(cfg.mode, super::super::Mode::Read);
@@ -216,17 +230,20 @@ mod test {
 
         #[test]
         fn can_create_config_from_valid_args_with_pass() {
-            let cfg = super::super::Config::from_args(&[
-                "--".to_string(), // needed to distinguish the initial arg (program name)
-                "-f".to_string(),
-                "images/cat.png".to_string(),
-                "-o".to_string(),
-                "out/output.png".to_string(),
-                "-i".to_string(),
-                "images/harold.png".to_string(),
-                "--pass".to_string(),
-                "password123!".to_string(),
-            ]);
+            let cfg = super::super::Config::from_args(
+                &[
+                    "--".to_string(), // needed to distinguish the initial arg (program name)
+                    "-f".to_string(),
+                    "images/cat.png".to_string(),
+                    "-o".to_string(),
+                    "out/output.png".to_string(),
+                    "-i".to_string(),
+                    "images/harold.png".to_string(),
+                    "--pass".to_string(),
+                    "password123!".to_string(),
+                ],
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
 
             // File mode got overwritten by last -i
             assert_eq!(cfg.mode, super::super::Mode::Read);
@@ -239,9 +256,12 @@ mod test {
         #[test]
         #[should_panic(expected = "An argument for image must be provided!")]
         fn cant_create_config_from_invalid_args() {
-            let _ = super::super::Config::from_args(&[
-                "--".to_string(), // needed to distinguish the initial arg (program name),
-            ]);
+            let _ = super::super::Config::from_args(
+                &[
+                    "--".to_string(), // needed to distinguish the initial arg (program name),
+                ],
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
             // none
         }
 
@@ -250,11 +270,14 @@ mod test {
             expected = "A file name to write (output) was provided, but no file to use was given"
         )]
         fn cant_create_config_with_unfinished_args() {
-            let _ = super::super::Config::from_args(&[
-                "--".to_string(), // needed to distinguish the initial arg (program name),
-                "-o".to_string(),
-                "out/output.png".to_string(),
-            ]);
+            let _ = super::super::Config::from_args(
+                &[
+                    "--".to_string(), // needed to distinguish the initial arg (program name),
+                    "-o".to_string(),
+                    "out/output.png".to_string(),
+                ],
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
             // none
         }
 
@@ -262,37 +285,49 @@ mod test {
         #[test]
         #[should_panic(expected = "File name must be provided after the -o flag!")]
         fn test_invalid_o_flag() {
-            let _ = super::super::Config::from_args(&[
-                "--".to_string(), // needed to distinguish the initial arg (program name),
-                "-o".to_string(),
-            ]);
+            let _ = super::super::Config::from_args(
+                &[
+                    "--".to_string(), // needed to distinguish the initial arg (program name),
+                    "-o".to_string(),
+                ],
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
         }
 
         #[test]
         #[should_panic(expected = "File name must be provided after the -f flag!")]
         fn test_invalid_f_flag() {
-            let _ = super::super::Config::from_args(&[
-                "--".to_string(), // needed to distinguish the initial arg (program name),
-                "-f".to_string(),
-            ]);
+            let _ = super::super::Config::from_args(
+                &[
+                    "--".to_string(), // needed to distinguish the initial arg (program name),
+                    "-f".to_string(),
+                ],
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
         }
 
         #[test]
         #[should_panic(expected = "File name must be provided after the -i flag!")]
         fn test_invalid_i_flag() {
-            let _ = super::super::Config::from_args(&[
-                "--".to_string(), // needed to distinguish the initial arg (program name),
-                "-i".to_string(),
-            ]);
+            let _ = super::super::Config::from_args(
+                &[
+                    "--".to_string(), // needed to distinguish the initial arg (program name),
+                    "-i".to_string(),
+                ],
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
         }
 
         #[test]
         #[should_panic(expected = "Unrecognized option or flag -asdkashdkajsdhkhk")]
         fn test_invalid_x_flag() {
-            let _ = super::super::Config::from_args(&[
-                "--".to_string(), // needed to distinguish the initial arg (program name),
-                "-asdkashdkajsdhkhk".to_string(),
-            ]);
+            let _ = super::super::Config::from_args(
+                &[
+                    "--".to_string(), // needed to distinguish the initial arg (program name),
+                    "-asdkashdkajsdhkhk".to_string(),
+                ],
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
         }
     }
 }

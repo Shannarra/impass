@@ -44,6 +44,12 @@ pub fn collect_env(env: super::Env) -> super::Env {
             "xor".to_string(),
             env.get("XOR").unwrap_or(&"69".to_string()).to_owned(),
         ),
+        (
+            "answers".to_string(),
+            env.get("ANSWERS")
+                .unwrap_or(&"y,yes".to_string())
+                .to_owned(),
+        ),
     ])
 }
 
@@ -70,6 +76,7 @@ pub fn generate_env() -> std::io::Result<()> {
         "SHIFT={sh}
 GODNUM={gn}
 XOR={xor}
+ANSWERS=\"y,yes\"
 ",
         sh = super::within_range(super::rand(), 8, 16),
         gn = super::within_range(super::rand(), 8, 16),

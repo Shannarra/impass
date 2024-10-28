@@ -62,7 +62,7 @@ fn rand() -> u8 {
         .subsec_nanos() as u8
 }
 
-type Env = std::collections::HashMap<String, String>;
+pub type Env = std::collections::HashMap<String, String>;
 
 mod test {
     #[test]
