@@ -53,23 +53,21 @@ impl<'a> Encoder<'a> {
 
      */
     fn use_pass(&mut self, pass: &String) {
-        println!("Incorporating password {pass}....");
+        crate::info!(format!("Incorporating password {pass}...."));
+        self.content.push(1);
     }
 
     fn encode(&mut self) {
         if let Some(pass) = &self.config.password {
             self.use_pass(pass);
+        } else {
+            // NO_HAS_PASS
+            self.content.push(0);
         }
 
         let secret: String = self.secret.chars().rev().collect();
 
         let crypt = crate::utils::crypt::encrypt_secret(&secret, &self.config.env);
-        println!("Overencryption: {crypt:?}");
-
-        println!(
-            "Decrypted: {}",
-            crate::utils::crypt::decrypt_secret(&crypt, &self.config.env)
-        );
 
         if &crate::utils::crypt::decrypt_secret(&crypt, &self.config.env) != self.secret {
             crate::error!("Your config seems to be incorrect. Please change its values or pass --generate-env once ro regenerate it and try running the program again");
@@ -78,14 +76,18 @@ impl<'a> Encoder<'a> {
         self.content.push(crypt.len() as u8);
 
         self.content.extend(crypt);
+        self.save_file()
+    }
 
+    fn save_file(&self) {
         if std::fs::write(&self.config.output_file, &self.content).is_err() {
-            std::fs::create_dir(&self.config.output_file).unwrap();
-
-            std::fs::write(&self.config.output_file, &self.content).unwrap();
-        } else {
-            println!("Done :)");
+            if std::fs::create_dir(&self.config.output_file).is_ok() {
+                std::fs::write(&self.config.output_file, &self.content).unwrap();
+            } else {
+                crate::error!(format!("Could not create your output file \"{}\". Does the program have the right permissions?", &self.config.output_file));
+            }
         }
+        println!("Done :)");
     }
 }
 

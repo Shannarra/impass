@@ -47,6 +47,10 @@ impl Config {
     /// Sets the output file by modifying self.
     /// Useful as an accessor down the work process.
     fn set_output(mut self) -> Self {
+        if !self.output_file.is_empty() {
+            return self;
+        }
+
         if let Some(out) = &self.write_file {
             self.output_file.clone_from(out); // = out.clone();
         } else {
@@ -193,6 +197,35 @@ Where available options are:
         config.set_mode().set_output().with_env(env).checked()
     }
 
+    #[allow(dead_code)]
+    pub fn new(
+        mode: Mode,
+        file: String,
+        password: Option<String>,
+        output_file: String,
+        env: crate::utils::Env,
+    ) -> Self {
+        let read_file = if mode == Mode::Read {
+            Some(file.clone())
+        } else {
+            None
+        };
+
+        Self {
+            read_file,
+            write_file: None,
+            file: Some(file),
+            mode,
+            output_file,
+            password,
+            env: crate::utils::Env::new(),
+        }
+        .set_mode()
+        .set_output()
+        .with_env(env)
+        .checked()
+    }
+
     /// An accessor to the input file the runtime will use.
     pub fn file_to_read(&self) -> &Option<String> {
         match self.mode {
@@ -205,6 +238,54 @@ Where available options are:
 
 mod test {
     mod config {
+        #[test]
+        fn can_create_config() {
+            let cfg = super::super::Config::new(
+                super::super::Mode::File,
+                String::from("images/harold.png"),
+                None,
+                String::from(""),
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
+
+            // File mode got overwritten by last -i
+            assert_eq!(cfg.mode, super::super::Mode::File);
+            // The in_file was also overwritten
+            assert_eq!(cfg.file_to_read(), &Some("images/harold.png".to_owned()));
+            assert_eq!(cfg.output_file, "result/harold.png".to_owned());
+            assert_eq!(cfg.password, None);
+        }
+
+        #[test]
+        fn can_create_config_with_output_and_pass() {
+            let cfg = super::super::Config::new(
+                super::super::Mode::File,
+                String::from("images/harold.png"),
+                Some(String::from("password132!")),
+                String::from("out/output.png"),
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
+
+            // File mode got overwritten by last -i
+            assert_eq!(cfg.mode, super::super::Mode::File);
+            // The in_file was also overwritten
+            assert_eq!(cfg.file_to_read(), &Some("images/harold.png".to_owned()));
+            assert_eq!(cfg.output_file, "out/output.png".to_owned());
+            assert_eq!(cfg.password, Some(String::from("password132!")));
+        }
+
+        #[test]
+        #[should_panic(expected = "The given file to read \"I_dont_exist.txt\" does not exist!")]
+        fn cant_create_config_if_file_doesnt_exist() {
+            let _ = super::super::Config::new(
+                super::super::Mode::File,
+                String::from("I_dont_exist.txt"),
+                Some(String::from("password132!")),
+                String::from(""),
+                super::super::utils::env::collect_env(super::super::utils::Env::new()),
+            );
+        }
+
         #[test]
         fn can_create_config_from_valid_args() {
             let cfg = super::super::Config::from_args(
