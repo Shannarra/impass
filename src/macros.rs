@@ -20,9 +20,9 @@ macro_rules! error {
 /// Unreachable code error, hopefully is never to be displayed.
 #[macro_export]
 macro_rules! unreachable {
-    ( $( $x:expr), *) => {{
-        $(error!("Should be unreachable"))*
-    }};
+		($( $x:expr ),* ) => {{
+				$($crate::error!(format!("Should be unreachable: {} {}:{}", $x, file!(), line!())))*
+		}};
 }
 
 /// A generic info facilitation macro.

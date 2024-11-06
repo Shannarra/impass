@@ -53,8 +53,18 @@ impl<'a> Encoder<'a> {
 
      */
     fn use_pass(&mut self, pass: &String) {
-        crate::info!(format!("Incorporating password {pass}...."));
+        crate::info!("Incorporating password...");
         self.content.push(1);
+
+        use super::super::utils;
+
+        let hashed = utils::impassible_hash(pass);
+        crate::info!("Encrypting your passsword..");
+        if let Ok(res) = bcrypt::hash(hashed.to_string(), utils::constants::BCRYPT_COST) {
+            self.content.extend(res.chars().map(|x| x as u8));
+        } else {
+            crate::unreachable!("BCrypt failed for some reason");
+        }
     }
 
     fn encode(&mut self) {

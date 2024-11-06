@@ -59,7 +59,7 @@ impl Config {
             } else if let Some(f) = &self.read_file {
                 f
             } else {
-                unreachable!()
+                crate::error!("Not a single file argument provided, nothing to do. Exiting.")
             }
             .clone();
 
