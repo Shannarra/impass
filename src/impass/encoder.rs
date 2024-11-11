@@ -2,26 +2,18 @@
 /// image (provided via config)
 /// @param config - the Config for the current run
 /// @param secret - the data to be stored into the image
-/// @param index - the index of the EOF pattern
 /// ```rust
 /// encode(config, "Hello, World!", 23456);
 /// ```
-pub fn encode(
-    config: &crate::config::Config,
-    content: &mut Vec<u8>,
-    secret: &String,
-    index: usize,
-) {
-    Encoder::new(config, content, secret, index).encode();
+pub fn encode(config: &crate::config::Config, content: &mut Vec<u8>, secret: &String) {
+    Encoder::new(config, content, secret).encode();
 }
 
-#[allow(dead_code)]
 #[derive(Debug)]
 struct Encoder<'a> {
     config: &'a crate::config::Config,
     content: &'a mut Vec<u8>,
     secret: &'a String,
-    index: usize,
 }
 
 impl<'a> Encoder<'a> {
@@ -29,13 +21,11 @@ impl<'a> Encoder<'a> {
         config: &'a crate::config::Config,
         content: &'a mut Vec<u8>,
         secret: &'a String,
-        index: usize,
     ) -> Self {
         Self {
             config,
             content,
             secret,
-            index,
         }
     }
 
@@ -61,6 +51,8 @@ impl<'a> Encoder<'a> {
         let hashed = utils::impassible_hash(pass);
         crate::info!("Encrypting your passsword..");
         if let Ok(res) = bcrypt::hash(hashed.to_string(), utils::constants::BCRYPT_COST) {
+            let len = res.len();
+            self.content.push(len as u8);
             self.content.extend(res.chars().map(|x| x as u8));
         } else {
             crate::unreachable!("BCrypt failed for some reason");

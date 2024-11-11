@@ -20,7 +20,7 @@ fn main() {
         // We'll encode something, so get a secret
         let input = utils::prompt("Enter your secret");
 
-        impass::encoder::encode(&config, &mut content, &input, index);
+        impass::encoder::encode(&config, &mut content, &input);
         println!(
             "Encoding into {}, using contents from {}... PASSWORD = \"{pass}\" and secret = {input}",
             config.output_file,
@@ -32,6 +32,7 @@ fn main() {
             }
         );
     } else {
+        impass::decoder::decode(&config, &mut content, index);
         // todo: add functionality to have number of tries against a password-protected secret
         println!("Decoding... {}", config.file_to_read().clone().unwrap());
     }
