@@ -29,11 +29,15 @@ pub fn prompt(message: &str) -> String {
 }
 
 /// Modified Jenkins Hash to work over bcrypt
-#[allow(dead_code)]
-pub fn impassible_hash<T>(item: &T) -> u128
-where
-    T: std::hash::Hash + std::string::ToString,
-{
+pub fn impassible_hash(item: &String) -> u128 {
+    // Allow ASCII-only characters, so that even passwords
+    // like "Pa$_swOrd" work :)
+    if !item.chars().all(|c| char::is_ascii(&c)) {
+        crate::error!(
+            "Password provided contains invalid characters. Please, use ASCII-only characters!"
+        );
+    }
+
     let key = item.to_string();
     let mut hash = 0u128;
     for c in key.chars() {

@@ -32,8 +32,7 @@ fn main() {
             }
         );
     } else {
-        impass::decoder::decode(&config, &mut content, index);
         // todo: add functionality to have number of tries against a password-protected secret
-        println!("Decoding... {}", config.file_to_read().clone().unwrap());
+        impass::decoder::decode(&config, &mut content, index);
     }
 }

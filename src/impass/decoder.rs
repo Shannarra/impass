@@ -4,6 +4,7 @@ pub fn decode(config: &crate::config::Config, content: &mut Vec<u8>, index: usiz
 
 #[derive(Debug)]
 struct Decoder<'a> {
+    config: &'a crate::config::Config,
     content: &'a mut Vec<u8>,
     index: usize,
     file: String,
@@ -14,6 +15,7 @@ impl<'a> Decoder<'a> {
         if let Some(file) = config.file_to_read().clone() {
             let index = index + crate::utils::constants::EOF_SIGNATURE.len();
             Self {
+                config,
                 content,
                 index,
                 file,
@@ -34,13 +36,24 @@ impl<'a> Decoder<'a> {
         if has_pass == 1 {
             self.check_password(encoded_content, &mut iter_idex);
         }
+
+        iter_idex += 1;
+
+        let secret_size = encoded_content[iter_idex];
+        iter_idex += 1;
+
+        let secret_bytecode = &encoded_content[iter_idex..(secret_size as usize + iter_idex)];
+
+        println!(
+            "Secret: {}",
+            crate::utils::crypt::decrypt_secret(secret_bytecode, &self.config.env)
+        )
     }
 
     fn check_password(&self, encoded_content: &[u8], iter_idex: &mut usize) {
         crate::info!(format!("The file {} is password-protected.", self.file));
 
         let pass = crate::utils::prompt("Please, enter your password");
-
         *iter_idex += 1;
         let crypt_len = encoded_content[*iter_idex] as usize;
         *iter_idex += 1;
@@ -54,6 +67,7 @@ impl<'a> Decoder<'a> {
         if let Ok(success) = bcrypt::verify(hashed.to_string(), crypt) {
             if success {
                 crate::info!("Your password matches!");
+                *iter_idex += crypt_len - 1;
             } else {
                 crate::error!("Passwords do not match!");
             }
