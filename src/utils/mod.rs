@@ -38,6 +38,10 @@ pub fn impassible_hash(item: &String) -> u128 {
         );
     }
 
+    if item.len() > 11 {
+        crate::error!("Maximum password length is 11.");
+    }
+
     let key = item.to_string();
     let mut hash = 0u128;
     for c in key.chars() {
@@ -78,5 +82,42 @@ mod test {
 
             assert!(res > 1 && res < 10);
         }
+    }
+
+    #[test]
+    fn index_vec_works() {
+        let nums = [1, 2, 3, 4, 5, 6];
+        let target = [3, 4, 5];
+
+        let idx = super::index_vec(&nums, &target);
+
+        assert_eq!(idx, Some(2));
+    }
+
+    #[test]
+    fn impassible_works_as_expected() {
+        let items = vec!["helloworld!", "Pa$_swOrd"];
+
+        for it in items {
+            assert!(super::impassible_hash(&it.to_string()) > 100000);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Maximum password length is 11.")]
+    fn impassible_has_strict_length() {
+        let item = "my password is tooo long";
+
+        super::impassible_hash(&item.to_string());
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Password provided contains invalid characters. Please, use ASCII-only characters!"
+    )]
+    fn impassible_has_strict_contents() {
+        let item = "невалиден"; // "invalid" in bulgarian
+
+        super::impassible_hash(&item.to_string());
     }
 }
