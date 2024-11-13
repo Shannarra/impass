@@ -77,6 +77,9 @@ impl<'a> Encoder<'a> {
 
         self.content.push(crypt.len() as u8);
 
+        // TODO: not a bad idea to be able to store the config env
+        // within the content?
+
         self.content.extend(crypt);
         self.save_file()
     }

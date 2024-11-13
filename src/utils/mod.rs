@@ -28,7 +28,9 @@ pub fn prompt(message: &str) -> String {
     input.trim().to_string()
 }
 
-/// Modified Jenkins Hash to work over bcrypt
+/// Modified Jenkins Hash to work in conjunction
+/// with bcrypt. Allows for 11-characters max ASCII
+/// only string.
 pub fn impassible_hash(item: &String) -> u128 {
     // Allow ASCII-only characters, so that even passwords
     // like "Pa$_swOrd" work :)
@@ -39,6 +41,7 @@ pub fn impassible_hash(item: &String) -> u128 {
     }
 
     if item.len() > 11 {
+        // 11 so it can bother you hehe
         crate::error!("Maximum password length is 11.");
     }
 
@@ -92,6 +95,10 @@ mod test {
         let idx = super::index_vec(&nums, &target);
 
         assert_eq!(idx, Some(2));
+
+        let idx = super::index_vec(&nums, &[4, 3]);
+
+        assert_eq!(idx, None);
     }
 
     #[test]

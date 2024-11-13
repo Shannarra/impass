@@ -10,7 +10,8 @@ fn main() {
     let env = std::env::vars().collect::<std::collections::HashMap<String, String>>();
     let argv: Vec<String> = std::env::args().collect();
 
-    let simplified_env = utils::env::collect_env(env);
+    // Use the commented env for generating test files:
+    let simplified_env = utils::env::collect_env(env); // utils::env::collect_env(utils::Env::new());
     let config = config::Config::from_args(&argv, simplified_env);
 
     let mut content = Vec::new();
@@ -33,6 +34,6 @@ fn main() {
         );
     } else {
         // todo: add functionality to have number of tries against a password-protected secret
-        impass::decoder::decode(&config, &mut content, index);
+        impass::decoder::decode(&config, &mut content, index, true);
     }
 }
