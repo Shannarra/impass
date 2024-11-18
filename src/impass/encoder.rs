@@ -29,19 +29,6 @@ impl<'a> Encoder<'a> {
         }
     }
 
-    /*
-    The password that has been set can be checked by something like:
-
-    if self.impassible_hash(&self.config.password.clone().unwrap())
-        == self.impassible_hash(&"assword")
-    {
-        println!("Password ok!");
-    } else {
-        println!("pass: {impassible}");
-        println!("ass: {}", self.impassible_hash(&"assword"));
-    }
-
-     */
     fn use_pass(&mut self, pass: &String) {
         crate::info!("Incorporating password...");
         self.content.push(1);
@@ -97,4 +84,35 @@ impl<'a> Encoder<'a> {
 }
 
 // TODO: tests
-mod test {}
+mod test {
+    #[allow(unused_imports)]
+    use super::super::test::{generate_config, get_content};
+
+    #[test]
+    fn encode_without_password() {
+        let encoding_config = super::super::test::generate_config(
+            None,
+            crate::config::Mode::Read,
+            "images/harold.png".to_string(),
+        );
+
+        let mut bytes = vec![];
+        let _ = get_content(&encoding_config, &mut bytes);
+
+        super::encode(&encoding_config, &mut bytes, &"encoding!".to_string());
+    }
+
+    #[test]
+    fn encode_with_password() {
+        let encoding_config = super::super::test::generate_config(
+            Some("pass123".to_string()),
+            crate::config::Mode::Read,
+            "images/harold.png".to_string(),
+        );
+
+        let mut bytes = vec![];
+        let _ = get_content(&encoding_config, &mut bytes);
+
+        super::encode(&encoding_config, &mut bytes, &"encoding!".to_string());
+    }
+}

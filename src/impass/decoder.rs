@@ -99,26 +99,16 @@ impl<'a> Decoder<'a> {
 }
 
 mod test {
-    // Stop Clippy from complaining
-    #[allow(dead_code)]
-    fn generate_config(pass: Option<String>, image: String) -> crate::config::Config {
-        crate::config::Config::new(
-            crate::config::Mode::Read,
-            image,
-            pass,
-            "output.png".to_string(),
-            crate::utils::env::collect_env(crate::utils::Env::new()),
-        )
-    }
-
-    #[allow(dead_code)]
-    fn get_content(config: &crate::config::Config, content: &mut Vec<u8>) -> usize {
-        crate::reading::gimme_bytecode(config, content)
-    }
+    #[allow(unused_imports)]
+    use crate::impass::test::{generate_config, get_content};
 
     #[test]
     fn decode_without_password() {
-        let cfg = generate_config(None, "tests/nopass.png".to_string());
+        let cfg = generate_config(
+            None,
+            crate::config::Mode::Read,
+            "tests/nopass.png".to_string(),
+        );
         let mut bytes = vec![];
         let index = get_content(&cfg, &mut bytes);
 
@@ -131,6 +121,7 @@ mod test {
     fn decode_with_password() {
         let cfg = generate_config(
             Some("asdasd".to_string()),
+            crate::config::Mode::Read,
             "tests/asdasd_pass.png".to_string(),
         );
         let mut bytes = vec![];
@@ -148,6 +139,7 @@ mod test {
     fn disallows_decoding_with_invalid_pass() {
         let cfg = generate_config(
             Some("невалидна".to_string()), // "invalid"
+            crate::config::Mode::Read,
             "tests/asdasd_pass.png".to_string(),
         );
         let mut bytes = vec![];
@@ -163,6 +155,7 @@ mod test {
     fn disallows_decoding_with_wrong_pass() {
         let cfg = generate_config(
             Some("wrongpass".to_string()),
+            crate::config::Mode::Read,
             "tests/asdasd_pass.png".to_string(),
         );
         let mut bytes = vec![];
